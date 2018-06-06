@@ -17,11 +17,14 @@ def fact_triple_extract(sentence):
     """
     # print sentence
     words = segmentor.segment(sentence)
-    # print "\t".join(words)
+    # print("\t".join(words))
     postags = postagger.postag(words)
     netags = recognizer.recognize(words, postags)
     arcs = parser.parse(words, postags)
     # print "\t".join("%d:%s" % (arc.head, arc.relation) for arc in arcs)
+    dic = {}
+    for word, netag in zip(words, netags):
+        dic[word] = netag
 
     child_dict_list = build_parse_child_dict(words, postags, arcs)
     for index in range(len(postags)):
@@ -34,7 +37,7 @@ def fact_triple_extract(sentence):
                 r = words[index]
                 e2 = complete_e(words, postags, child_dict_list, child_dict['VOB'][0])
                 if e1 not in except_list:
-                    return (e1, r, e2, "主语谓语宾语关系")
+                    return (e1, r, e2, "主语谓语宾语关系", dic.get(e1), dic.get(e2))
             # 定语后置，动宾关系
             if arcs[index].relation == 'ATT':
                 if 'VOB' in child_dict:
@@ -46,7 +49,7 @@ def fact_triple_extract(sentence):
                         e1 = e1[len(temp_string):]
                     if temp_string not in e1:
                         if e1 not in except_list:
-                            return (e1, r, e2, "定语后置动宾关系")
+                            return (e1, r, e2, "定语后置动宾关系", dic.get(e1), dic.get(e2))
             # 含有介宾关系的主谓动补关系
             if 'SBV' in child_dict and 'CMP' in child_dict:
                 # e1 = words[child_dict['SBV'][0]]
@@ -56,7 +59,7 @@ def fact_triple_extract(sentence):
                 if 'POB' in child_dict_list[cmp_index]:
                     e2 = complete_e(words, postags, child_dict_list, child_dict_list[cmp_index]['POB'][0])
                     if e1 not in except_list:
-                        return (e1, r, e2, "介宾关系主谓动补")
+                        return (e1, r, e2, "介宾关系主谓动补", dic.get(e1), dic.get(e2))
 
         # 尝试抽取命名实体有关的三元组
         if netags[index][0] == 'S' or netags[index][0] == 'B':
@@ -83,7 +86,7 @@ def fact_triple_extract(sentence):
                     if r in e2:
                         e2 = e2[(e2.index(r) + len(r)):]
                     if r + e2 in sentence:
-                        return (e1, r, e2, "人名//地名//机构")
+                        return (e1, r, e2, "人名//地名//机构", dic.get(e1), dic.get(e2))
 
 
 def build_parse_child_dict(words, postags, arcs):
@@ -179,4 +182,7 @@ if __name__ == '__main__':
                 continue
 
     for e in quadra_list:
+        # 1. 判断e1 e2 是否是是
+
+
         print(e)

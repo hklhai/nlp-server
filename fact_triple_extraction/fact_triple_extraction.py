@@ -107,6 +107,9 @@ def fact_triple_extract(sentence, out_file):
     # print "\t".join(words)
     postags = postagger.postag(words)
     netags = recognizer.recognize(words, postags)
+
+    for word, potag, netag in zip(words, postags, netags):
+        print(word + "\t" + potag + "\t" + netag)
     arcs = parser.parse(words, postags)
     # print "\t".join("%d:%s" % (arc.head, arc.relation) for arc in arcs)
 

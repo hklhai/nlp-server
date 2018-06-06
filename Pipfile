@@ -11,6 +11,7 @@ pyhanlp = "*"
 "py2neo" = "*"
 pyltp = "*"
 elasticsearch = "*"
+pytest = "*"
 
 [dev-packages]
 
