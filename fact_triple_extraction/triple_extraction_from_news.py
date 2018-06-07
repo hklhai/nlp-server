@@ -5,6 +5,7 @@ import os
 from pyltp import Segmentor, Postagger, Parser, NamedEntityRecognizer, SementicRoleLabeller
 
 from elasticsearch import Elasticsearch
+from py2neo import Graph, Node, Relationship
 
 from common.global_list import *
 
@@ -166,7 +167,7 @@ if __name__ == '__main__':
     es = Elasticsearch([HOST_PORT])
     # 指定时间的新闻数据
     # query = {'query': {'range': {'age': {'gt': 11}}}}
-    body = {"query": {"term": {"create_date": "2018-06-04"}}}
+    body = {"query": {"term": {"create_date": "2018-06-05"}}}
     allDoc = es.search(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body)
 
     quadra_list = []
@@ -177,12 +178,35 @@ if __name__ == '__main__':
         for sentence in sentences:
             quadra = fact_triple_extract(sentence)
             if quadra != None:
-                quadra_list.append(quadra)
+                quadra_list.append((quadra, allDoc['hits']['hits'][i]["_id"]))
             else:
                 continue
 
-    for e in quadra_list:
-        # 1. 判断e1 e2 是否是是
+    graph = Graph(
+        host=NEO4J_HOST,  # neo4j 搭载服务器的ip地址，ifconfig可获取到
+        http_port=NEO4J_HTTP_PORT,  # neo4j 服务器监听的端口号
+        user=NEO4J_USER,  # 数据库user name，如果没有更改过，应该是neo4j
+        password=NEO4J_PASSWORD  # 自己设定的密码
+    )
 
+    dict_label = {'S-Nh': "Person", 'S-Ni': "Organization", 'S-Ns': "Place", 'O': "Obj"};
+    for element in quadra_list:
+        # print(e)
+        # 1. 判断e1 e2 是否是人名（S-Nh），地名（S-NS），机构名（S-Ni）
+        # print(e[1]+" "+e[2])
+        e = element[0]
+        elastic_search_id = element[1]
+        if e[4] == None:
+            node = Node("Obj", name=e[0], eid=elastic_search_id)
+        else:
+            node = Node(dict_label[e[4]], name=e[0], eid=elastic_search_id)
+        graph.create(node)
 
-        print(e)
+        if e[5] == None:
+            node2 = Node("Obj", name=e[2], eid=elastic_search_id)
+        else:
+            node2 = Node(dict_label[e[5]], name=e[2], eid=elastic_search_id)
+        graph.create(node2)
+
+        node_call_node_2 = Relationship(node, e[1], node2)
+        graph.create(node_call_node_2)

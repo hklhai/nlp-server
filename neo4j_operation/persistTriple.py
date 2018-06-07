@@ -12,32 +12,13 @@ graph = Graph(
     password=NEO4J_PASSWORD  # 自己设定的密码
 )
 
-
-"""
-g.delete_all()
-tx = g.begin()
-worker_1 = {"name":"allen","age":13,"company":"google inc"}
-worker_2 = {"name":"john","age":24,"company":"microsoft inc"}
-node_1 = Node("WORKER",**worker_1)
-node_2 = Node("WORKER",**worker_2)
-rel_1_2 = Relationship(node_1,"CO_WORKER",node_2)
-tx.merge(node_1)
-tx.merge(node_2)
-tx.merge(rel_1_2)
-tx.commit()
-"""
-graph.delete_all()
-tx = graph.begin()
-# in loop mode
-worker_list = [
-    {"name": "allen", "age": 13, "company": "google inc"},
-    {"name": "john", "age": 24, "company": "microsoft inc"}
-]
-for worker in worker_list:
-    node = Node("WORKER", **worker)
-    tx.merge(node)
-node1 = Node(name="allen")
-node2 = Node(name="john")
-rel = Relationship(node1, "CO_WORKER", node2)
-tx.merge(rel)
-tx.commit()
+test_node_1 = Node("Person", name="peter")
+test_node_2 = Node("Person", name="tom")
+graph.create(test_node_1)
+graph.create(test_node_2)
+node_1_call_node_2 = Relationship(test_node_1, 'CALL', test_node_2)
+node_1_call_node_2['count'] = 1
+node_2_call_node_1 = Relationship(test_node_2, 'CALL', test_node_1)
+node_2_call_node_1['count'] = 2
+graph.create(node_1_call_node_2)
+graph.create(node_2_call_node_1)
