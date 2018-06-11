@@ -167,7 +167,7 @@ if __name__ == '__main__':
     es = Elasticsearch([HOST_PORT])
     # 指定时间的新闻数据
     # query = {'query': {'range': {'age': {'gt': 11}}}}
-    body = {"query": {"term": {"create_date": "2018-06-05"}}}
+    body = {"query": {"term": {"create_date": "2018-06-06"}}}
     allDoc = es.search(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body)
 
     quadra_list = []
@@ -189,11 +189,12 @@ if __name__ == '__main__':
         password=NEO4J_PASSWORD  # 自己设定的密码
     )
 
-    dict_label = {'S-Nh': "Person", 'S-Ni': "Organization", 'S-Ns': "Place", 'O': "Obj"};
+    dict_label = {'S-Nh': "Person", 'S-Ni': "Organization", 'S-Ns': "Location", 'O': "Obj"};
     for element in quadra_list:
-        # print(e)
-        # 1. 判断e1 e2 是否是人名（S-Nh），地名（S-NS），机构名（S-Ni）
-        # print(e[1]+" "+e[2])
+        # 判断e1 e2 是否是人名（S-Nh），地名（S-NS），机构名（S-Ni）
+
+        # todo  先查询接点是否存在再加入
+
         e = element[0]
         elastic_search_id = element[1]
         if e[4] == None:

@@ -12,6 +12,7 @@ pyhanlp = "*"
 pyltp = "*"
 elasticsearch = "*"
 pytest = "*"
+stanfordcorenlp = "*"
 
 [dev-packages]
 
