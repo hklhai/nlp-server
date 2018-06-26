@@ -11,7 +11,7 @@ nlp = StanfordCoreNLP('http://192.168.1.169', lang='zh', port=9000, quiet=False,
 es = Elasticsearch([HOST_PORT])
 
 # 指定时间的新闻数据
-body = {"query": {"term": {"create_date": "2018-06-06"}}}
+body = {"query": {"term": {"create_date": "2018-06-09"}}}
 allDoc = es.search(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body)
 
 event_label = ['CITY', 'COUNTRY', 'FACILITY', 'LOCATION', 'PERSON', 'DATE', 'STATE_OR_PROVINCE', 'TITLE',
@@ -40,8 +40,6 @@ for i in range(0, len(allDoc['hits']['hits'])):
             continue
         elif ele[0] in except_list:
             continue
-        # else:
-        #
         elif ele[1] in event_label:
             entity_list.append((ele[0], ele[1]))
         else:
@@ -49,11 +47,12 @@ for i in range(0, len(allDoc['hits']['hits'])):
 
     entity_list = list(set(entity_list))
     node = Node("Event", name=allDoc['hits']['hits'][i].get('_source').get('title'),
-                eid=allDoc['hits']['hits'][i]["_id"])
+                eid=allDoc['hits']['hits'][i]["_id"], image="EVENT.PNG")
     graph.create(node)
     for element in entity_list:
-        node2 = Node(element[1], name=element[0], eid=allDoc['hits']['hits'][i]["_id"])
+        node2 = Node(element[1], name=element[0], eid=allDoc['hits']['hits'][i]["_id"], image=element[1] + ".PNG")
         graph.create(node2)
         node_call_node_2 = Relationship(node, element[1], node2)
+        node_call_node_2['edge'] = element[1]
         graph.create(node_call_node_2)
     entity_list = []
