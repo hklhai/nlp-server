@@ -94,9 +94,12 @@ def file_list(file_dir):
 
 if __name__ == '__main__':
     now_date = get_now_date()
-    now_date = "2018-06-09"
-    file_name = "/home/hadoop/news"
-    lists = file_list(file_name)
-    for i in range(len(lists)):
-        print(lists[i])
-        ner_persist_to_es_and_neo4j(lists[i])
+    # print(now_date)
+    ner_persist_to_es_and_neo4j(now_date)
+
+    # now_date = "2018-06-09"
+    # file_name = "/home/hadoop/news"
+    # lists = file_list(file_name)
+    # for i in range(len(lists)):
+    #     print(lists[i])
+    #     ner_persist_to_es_and_neo4j(lists[i])
