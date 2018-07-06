@@ -3,6 +3,10 @@
 # ElasticSearch
 HOST_PORT = 'spark1:9200'
 
+# ElasticSearch DEBUG
+# HOST_PORT = 'spark3:9200'
+
+
 # ElasticSearch index
 NEWS_INDEX = "news_data"
 NEWS_TYPE = "news"

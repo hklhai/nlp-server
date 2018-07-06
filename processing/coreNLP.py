@@ -30,6 +30,9 @@ def ner_persist_to_es_and_neo4j(now_date):
     body = {"query": {"term": {"create_date": now_date}}}
     # body = {"query": {"term": {"create_date": "2018-06-09"}}}
     count = es.count(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body)
+    if count['count'] == 0:
+        return
+
     body_all = {"query": {"term": {"create_date": now_date}}, "size": count['count']}
     allDoc = es.search(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body_all)
 
