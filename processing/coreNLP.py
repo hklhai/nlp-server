@@ -29,7 +29,9 @@ def ner_persist_to_es_and_neo4j(now_date):
     # 指定时间的新闻数据
     body = {"query": {"term": {"create_date": now_date}}}
     # body = {"query": {"term": {"create_date": "2018-06-09"}}}
-    allDoc = es.search(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body)
+    count = es.count(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body)
+    body_all = {"query": {"term": {"create_date": now_date}}, "size": count['count']}
+    allDoc = es.search(index=NEWS_INDEX, doc_type=NEWS_TYPE, body=body_all)
 
     event_label = ['CITY', 'COUNTRY', 'FACILITY', 'LOCATION', 'PERSON', 'DATE', 'STATE_OR_PROVINCE', 'TITLE',
                    'ORGANIZATION']
@@ -85,6 +87,11 @@ def ner_persist_to_es_and_neo4j(now_date):
         body = {"eid": allDoc['hits']['hits'][i]["_id"], "title": allDoc['hits']['hits'][i].get('_source').get('title'),
                 "search_text": search_text}
         es.index(index="search_text", doc_type="text", body=body)
+        print(search_text)
+
+        # 重新置空
+        search_text = ""
+        entity_list = []
 
 
 def file_list(file_dir):
@@ -93,13 +100,12 @@ def file_list(file_dir):
 
 
 if __name__ == '__main__':
-    now_date = get_now_date()
-    # print(now_date)
-    ner_persist_to_es_and_neo4j(now_date)
-
+    # now_date = get_now_date()
     # now_date = "2018-06-09"
-    # file_name = "/home/hadoop/news"
-    # lists = file_list(file_name)
-    # for i in range(len(lists)):
-    #     print(lists[i])
-    #     ner_persist_to_es_and_neo4j(lists[i])
+    # ner_persist_to_es_and_neo4j(now_date)
+
+    file_name = "/home/hadoop/news"
+    lists = file_list(file_name)
+    for i in range(len(lists)):
+        print(lists[i])
+        ner_persist_to_es_and_neo4j(lists[i])
