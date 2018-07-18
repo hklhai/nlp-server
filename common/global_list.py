@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-DEV_MODE = "DEBUG"
-# DEV_MODE = "FML"
+# DEV_MODE = "DEBUG"
+DEV_MODE = "FML"
 
 if DEV_MODE == "DEBUG":
     HOST_PORT = 'spark3:9200'
