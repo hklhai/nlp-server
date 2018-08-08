@@ -4,8 +4,12 @@ export PATH=$PATH:/usr/local/bin:/home/hadoop/.local/share/virtualenvs/nlp-serve
 
 
 #进入.py脚本所在目录
-cd /home/hadoop/PycharmProjects/nlp-server/processing
-#cd /home/ubuntu1/Project/nlp-server/processing
+#cd /home/hadoop/PycharmProjects/nlp-server/processing
+cd /home/ubuntu1/Project/nlp-server/
+
+git -c core.quotepath=false -c log.showSignature=false pull --progress --no-stat -v --progress origin master
+
+cd processing
 
 #执行.py中定义的项目，并指定日志文件，其中nohup....&表示可以在后台执行，不会因为关闭终端而导致程序执行中断。
 v_date=$(date +%Y%m%d)
