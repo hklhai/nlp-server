@@ -3,11 +3,12 @@
 import logging
 import os
 import sys
-import time
 
 from elasticsearch import Elasticsearch
 from py2neo import Graph, Node, Relationship
 from stanfordcorenlp import StanfordCoreNLP
+import datetime
+import time
 
 sys.path.append(os.path.dirname(os.getcwd()))
 from common.global_list import *
@@ -19,6 +20,30 @@ def get_now_date():
     :return: 返回当前日期
     """
     return time.strftime('%Y-%m-%d', time.localtime(time.time()))
+
+
+def get_pre_date_list(offset_date, end_date):
+    """
+    不包含终止时间
+    :param offset_date:
+    :param end_date:
+    :return:
+    """
+    # 先计算相差天数
+    date1 = time.strptime(offset_date, "%Y-%m-%d")
+    date2 = time.strptime(end_date, "%Y-%m-%d")
+    date1 = datetime.datetime(date1[0], date1[1], date1[2])
+    date2 = datetime.datetime(date2[0], date2[1], date2[2])
+    num = date2 - date1
+
+    list = []
+    for i in range(num.days):
+        divide_date = datetime.timedelta(days=i)
+        tmp = date1 + divide_date
+        tmp = tmp.strftime("%Y-%m-%d")
+        list.append(tmp.__str__())
+
+    return list
 
 
 def ner_persist_to_es_and_neo4j(now_date):
@@ -103,12 +128,10 @@ def file_list(file_dir):
 
 
 if __name__ == '__main__':
-    now_date = get_now_date()
-    # now_date = "2018-06-09"
-    ner_persist_to_es_and_neo4j(now_date)
+    # now_date = get_now_date()
+    # ner_persist_to_es_and_neo4j(now_date)
 
-    # file_name = "/home/hadoop/news"
-    # lists = file_list(file_name)
-    # for i in range(len(lists)):
-    #     print(lists[i])
-    #     ner_persist_to_es_and_neo4j(lists[i])
+    l = get_pre_date_list("2018-07-11", "2018-08-07")
+    for i in range(len(l)):
+        print(l[i])
+        ner_persist_to_es_and_neo4j(l[i])
