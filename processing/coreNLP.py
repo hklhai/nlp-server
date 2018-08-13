@@ -72,7 +72,7 @@ def ner_persist_to_es_and_neo4j(now_date):
     entity_list = []
 
     label_dict = {'CITY': "城市", 'COUNTRY': "国家", 'DATE': "日期", 'FACILITY': "基础设施", 'LOCATION': "位置",
-                  'ORGANIZATION': "组织机构", 'PERSON': "任务", 'STATE_OR_PROVINCE': "省市", 'TITLE': "头衔"}
+                  'ORGANIZATION': "组织机构", 'PERSON': "人物", 'STATE_OR_PROVINCE': "省市", 'TITLE': "头衔"}
 
     # ElasticSearch Setting
     es = Elasticsearch([HOST_PORT])
