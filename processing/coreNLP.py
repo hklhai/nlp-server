@@ -1,14 +1,14 @@
 # coding=utf-8
 
+import datetime
 import logging
 import os
 import sys
+import time
 
 from elasticsearch import Elasticsearch
 from py2neo import Graph, Node, Relationship
 from stanfordcorenlp import StanfordCoreNLP
-import datetime
-import time
 
 sys.path.append(os.path.dirname(os.getcwd()))
 from common.global_list import *
@@ -99,8 +99,10 @@ def ner_persist_to_es_and_neo4j(now_date):
                 continue
 
         entity_list = list(set(entity_list))
-        node = Node("Event", name=allDoc['hits']['hits'][i].get('_source').get('title'),
-                    eid=allDoc['hits']['hits'][i]["_id"], image="EVENT.PNG")
+        eid = allDoc['hits']['hits'][i]["_id"]
+        title = allDoc['hits']['hits'][i].get('_source').get('title')
+
+        node = Node("Event", name=title, eid=eid, image="EVENT.PNG")
         graph.create(node)
         for element in entity_list:
             node2 = Node(element[1], name=element[0], eid=allDoc['hits']['hits'][i]["_id"], image=element[1] + ".PNG")
@@ -108,18 +110,26 @@ def ner_persist_to_es_and_neo4j(now_date):
             node_call_node_2 = Relationship(node, label_dict[element[1]], node2)
             node_call_node_2['edge'] = label_dict[element[1]]
             graph.create(node_call_node_2)
+
         search_text = ""
         for element in entity_list:
             search_text += element[0] + ","
-        search_text = search_text[0:-1]
-        body = {"eid": allDoc['hits']['hits'][i]["_id"], "title": allDoc['hits']['hits'][i].get('_source').get('title'),
-                "search_text": search_text}
-        es.index(index="search_text", doc_type="text", body=body)
-        print(search_text)
 
-        # 重新置空
-        search_text = ""
-        entity_list = []
+        search_text = search_text[0:-1]
+
+        query = {'query': {'term': {'eid': eid}}}
+        total = es.count(index="search_text", doc_type="text", body=query)
+
+        # 根据title查询search_text，如果不存在，插入
+        if total['count'] == 0:
+            body = {"eid": eid, "title": title, "search_text": search_text}
+            es.index(index="search_text", doc_type="text", body=body)
+            print(search_text)
+            # 重新置空
+            search_text = ""
+            entity_list = []
+        else:
+            pass
 
 
 def file_list(file_dir):
@@ -128,7 +138,10 @@ def file_list(file_dir):
 
 
 if __name__ == '__main__':
-    now_date = get_now_date()
+    # now_date = get_now_date()
+    # ner_persist_to_es_and_neo4j(now_date)
+
+    now_date = "2018-08-20"
     ner_persist_to_es_and_neo4j(now_date)
 
     # l = get_pre_date_list("2018-07-11", "2018-08-07")
