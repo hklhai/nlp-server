@@ -141,10 +141,7 @@ if __name__ == '__main__':
     # now_date = get_now_date()
     # ner_persist_to_es_and_neo4j(now_date)
 
-    now_date = "2017-08-13"
-    ner_persist_to_es_and_neo4j(now_date)
-
-    # l = get_pre_date_list("2018-07-11", "2018-08-07")
-    # for i in range(len(l)):
-    #     print(l[i])
-    #     ner_persist_to_es_and_neo4j(l[i])
+    l = get_pre_date_list("2018-05-15", "2018-08-14")
+    for i in range(len(l)):
+        print(l[i])
+        ner_persist_to_es_and_neo4j(l[i])
