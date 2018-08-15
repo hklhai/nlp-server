@@ -47,7 +47,7 @@ def get_pre_date_list(offset_date, end_date):
 
 
 def ner_persist_to_es_and_neo4j(now_date):
-    nlp = StanfordCoreNLP(CORE_NLP, lang='zh', port=9000, quiet=False, logging_level=logging.DEBUG)
+    nlp = StanfordCoreNLP(CORE_NLP, lang='zh', port=9000, quiet=False, logging_level=logging.DEBUG, timeout=150000)
 
     es = Elasticsearch([HOST_PORT])
 
@@ -86,7 +86,7 @@ def ner_persist_to_es_and_neo4j(now_date):
     for i in range(0, len(allDoc['hits']['hits'])):
         # for i in range(0, 3):
         sentence = allDoc['hits']['hits'][i].get('_source').get('content')
-
+        sentence = sentence[0:100000]
         ner_list = nlp.ner(sentence)
         for ele in ner_list:
             if ele[1] in except_label:
@@ -102,14 +102,21 @@ def ner_persist_to_es_and_neo4j(now_date):
         eid = allDoc['hits']['hits'][i]["_id"]
         title = allDoc['hits']['hits'][i].get('_source').get('title')
 
-        node = Node("Event", name=title, eid=eid, image="EVENT.PNG")
-        graph.create(node)
-        for element in entity_list:
-            node2 = Node(element[1], name=element[0], eid=allDoc['hits']['hits'][i]["_id"], image=element[1] + ".PNG")
-            graph.create(node2)
-            node_call_node_2 = Relationship(node, label_dict[element[1]], node2)
-            node_call_node_2['edge'] = label_dict[element[1]]
-            graph.create(node_call_node_2)
+        # 根据title查询neo4j，如果title不存在插入
+        # MATCH (a:Event) WHERE a.name = ''  RETURN a;
+        cypher = "MATCH (a:Event) WHERE a.name =\'" + title + "\' RETURN a"
+        count = len(graph.run(cypher).data())
+        if count == 0:
+            node = Node("Event", name=title, eid=eid, image="EVENT.PNG")
+            graph.create(node)
+            for element in entity_list:
+                node2 = Node(element[1], name=element[0], eid=eid, image=element[1] + ".PNG")
+                graph.create(node2)
+                node_call_node_2 = Relationship(node, label_dict[element[1]], node2)
+                node_call_node_2['edge'] = label_dict[element[1]]
+                graph.create(node_call_node_2)
+        else:
+            pass
 
         search_text = ""
         for element in entity_list:
@@ -120,7 +127,7 @@ def ner_persist_to_es_and_neo4j(now_date):
         query = {'query': {'term': {'eid': eid}}}
         total = es.count(index="search_text", doc_type="text", body=query)
 
-        # 根据title查询search_text，如果不存在，插入
+        # 根据title查询search_text索引，如果不存在插入
         if total['count'] == 0:
             body = {"eid": eid, "title": title, "search_text": search_text}
             es.index(index="search_text", doc_type="text", body=body)
@@ -138,10 +145,14 @@ def file_list(file_dir):
 
 
 if __name__ == '__main__':
-    # now_date = get_now_date()
+    now_date = get_now_date()
+    ner_persist_to_es_and_neo4j(now_date)
+
+    # now_date = "2017-08-13"
     # ner_persist_to_es_and_neo4j(now_date)
 
-    l = get_pre_date_list("2018-05-15", "2018-08-14")
-    for i in range(len(l)):
-        print(l[i])
-        ner_persist_to_es_and_neo4j(l[i])
+    # l = get_pre_date_list("2018-06-23", "2018-08-14")
+    # print(len(l))
+    # for i in range(len(l)):
+    #     print(l[i])
+    #     ner_persist_to_es_and_neo4j(l[i])
