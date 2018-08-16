@@ -122,24 +122,25 @@ def ner_persist_to_es_and_neo4j(now_date):
         sentence = allDoc['hits']['hits'][i].get('_source').get('content')
         eid = allDoc['hits']['hits'][i]["_id"]
         title = allDoc['hits']['hits'][i].get('_source').get('title')
-        sentence = sentence[0:100000]
+        if sentence is not None:
+            deal_sentence(entity_list, event_label, except_label, except_list, nlp, sentence)
 
-        deal_sentence(entity_list, event_label, except_label, except_list, nlp, sentence)
+            entity_list = list(set(entity_list))
 
-        entity_list = list(set(entity_list))
+            # 根据title查询neo4j，如果title不存在插入
+            # MATCH (a:Event) WHERE a.name = ''  RETURN a;
+            persist_neo4j(eid, entity_list, graph, label_dict, title)
 
-        # 根据title查询neo4j，如果title不存在插入
-        # MATCH (a:Event) WHERE a.name = ''  RETURN a;
-        persist_neo4j(eid, entity_list, graph, label_dict, title)
+            search_text = ""
+            for element in entity_list:
+                search_text += element[0] + ","
+            search_text = search_text[0:-1]
 
-        search_text = ""
-        for element in entity_list:
-            search_text += element[0] + ","
-        search_text = search_text[0:-1]
-
-        persist_elasticsearch(eid, es, search_text, title)
-        # 重新置空
-        entity_list = []
+            persist_elasticsearch(eid, es, search_text, title)
+            # 重新置空
+            entity_list = []
+        else:
+            pass
 
 
 def persist_elasticsearch(eid, es, search_text, title):
