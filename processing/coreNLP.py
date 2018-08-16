@@ -14,6 +14,11 @@ sys.path.append(os.path.dirname(os.getcwd()))
 from common.global_list import *
 
 
+def contain_english(str0):
+    import re
+    return bool(re.search('[a-zA-Z]', str0))
+
+
 def get_now_date():
     """
     返回形如2018-05-03的日期
@@ -71,7 +76,13 @@ def parse_ner_list(entity_list, ner_list, except_label, except_list, event_label
 
             # 一直下探，判断下一个label是否相同
             while i + 1 < len(ner_list) and ner_list[i + 1][1] == label:
-                word += ner_list[i + 1][0]
+                # 判断词是否为英文，如果是英文需要增加空格
+                tmp = ner_list[i + 1][0]
+                if contain_english(tmp) and contain_english(word):
+                    word += " "
+                    word += tmp
+                else:
+                    word += tmp
                 i += 1
             entity_list.append((word, label))
 
@@ -192,7 +203,7 @@ if __name__ == '__main__':
     # now_date = get_now_date()
     # ner_persist_to_es_and_neo4j(now_date)
 
-    l = get_pre_date_list("2018-06-09", "2018-08-15")
+    l = get_pre_date_list("2018-06-26", "2018-08-15")
     print(len(l))
     for i in range(len(l)):
         print(l[i])
