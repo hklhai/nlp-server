@@ -200,11 +200,11 @@ def deal_sentence(entity_list, event_label, except_label, except_list, nlp, sent
 
 
 if __name__ == '__main__':
-    # now_date = get_now_date()
-    # ner_persist_to_es_and_neo4j(now_date)
+    now_date = get_now_date()
+    ner_persist_to_es_and_neo4j(now_date)
 
-    l = get_pre_date_list("2018-06-26", "2018-08-15")
-    print(len(l))
-    for i in range(len(l)):
-        print(l[i])
-        ner_persist_to_es_and_neo4j(l[i])
+    # l = get_pre_date_list("2018-08-15", "2018-08-16")
+    # print(len(l))
+    # for i in range(len(l)):
+    #     print(l[i])
+    #     ner_persist_to_es_and_neo4j(l[i])
