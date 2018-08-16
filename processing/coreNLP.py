@@ -129,11 +129,9 @@ def ner_persist_to_es_and_neo4j(now_date):
     )
 
     for i in range(0, len(allDoc['hits']['hits'])):
-        # for i in range(0, 3):
         sentence = allDoc['hits']['hits'][i].get('_source').get('content')
         eid = allDoc['hits']['hits'][i]["_id"]
         title = allDoc['hits']['hits'][i].get('_source').get('title')
-
         # 根据title查询search_text索引，如果不存在插入
         query = {'query': {'match_phrase': {'title': title}}}
         total = es.count(index="search_text", doc_type="text", body=query)
@@ -143,26 +141,24 @@ def ner_persist_to_es_and_neo4j(now_date):
         cypher = "MATCH (a:Event) WHERE a.name =\'" + title + "\' RETURN a"
         count = len(graph.run(cypher).data())
 
-        if total['count'] == 0 and count == 0:
+        if total['count'] == 0 or count == 0:
             if sentence is not None:
                 deal_sentence(entity_list, event_label, except_label, except_list, nlp, sentence)
 
                 entity_list = list(set(entity_list))
-
-                persist_neo4j(eid, entity_list, graph, label_dict, title)
+                if count == 0:
+                    persist_neo4j(eid, entity_list, graph, label_dict, title)
 
                 search_text = ""
                 for element in entity_list:
                     search_text += element[0] + ","
                 search_text = search_text[0:-1]
-
-                persist_elasticsearch(eid, es, search_text, title)
+                if total['count'] == 0:
+                    persist_elasticsearch(eid, es, search_text, title)
                 # 重新置空
                 entity_list = []
             else:
                 continue
-        else:
-            continue
 
 
 def persist_elasticsearch(eid, es, search_text, title):
@@ -183,27 +179,25 @@ def persist_neo4j(eid, entity_list, graph, label_dict, title):
 
 
 def deal_sentence(entity_list, event_label, except_label, except_list, nlp, sentence):
-    try:
-        ner_list = nlp.ner(sentence)
-        for ele in ner_list:
-            if ele[1] in except_label:
-                continue
-            elif ele[0] in except_list:
-                continue
-            elif ele[1] in event_label:
-                # entity_list.append((ele[0], ele[1]))
-                parse_ner_list(entity_list, ner_list, except_label, except_list, event_label)
-            else:
-                continue
-    except Exception as e:
-        print(e)
+    ner_list = nlp.ner(sentence)
+    for ele in ner_list:
+        if ele[1] in except_label:
+            continue
+        elif ele[0] in except_list:
+            continue
+        elif ele[1] in event_label:
+            # entity_list.append((ele[0], ele[1]))
+            parse_ner_list(entity_list, ner_list, except_label, except_list, event_label)
+        else:
+            continue
 
 
 if __name__ == '__main__':
     now_date = get_now_date()
     ner_persist_to_es_and_neo4j(now_date)
 
-    # l = get_pre_date_list("2018-08-15", "2018-08-16")
+    # l = get_pre_date_list("2018-06-04", "2018-08-16")
+    # l = get_pre_date_list("2018-07-20", "2018-07-21")
     # print(len(l))
     # for i in range(len(l)):
     #     print(l[i])
