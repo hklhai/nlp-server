@@ -122,74 +122,77 @@ def ner_persist_to_es_and_neo4j(now_date):
         sentence = allDoc['hits']['hits'][i].get('_source').get('content')
         eid = allDoc['hits']['hits'][i]["_id"]
         title = allDoc['hits']['hits'][i].get('_source').get('title')
-        if sentence is not None:
-            deal_sentence(entity_list, event_label, except_label, except_list, nlp, sentence)
 
-            entity_list = list(set(entity_list))
+        # 根据title查询search_text索引，如果不存在插入
+        query = {'query': {'match_phrase': {'title': title}}}
+        total = es.count(index="search_text", doc_type="text", body=query)
 
-            # 根据title查询neo4j，如果title不存在插入
-            # MATCH (a:Event) WHERE a.name = ''  RETURN a;
-            persist_neo4j(eid, entity_list, graph, label_dict, title)
+        # 根据title查询neo4j，如果title不存在插入
+        # MATCH (a:Event) WHERE a.name = ''  RETURN a;
+        cypher = "MATCH (a:Event) WHERE a.name =\'" + title + "\' RETURN a"
+        count = len(graph.run(cypher).data())
 
-            search_text = ""
-            for element in entity_list:
-                search_text += element[0] + ","
-            search_text = search_text[0:-1]
+        if total['count'] == 0 and count == 0:
+            if sentence is not None:
+                deal_sentence(entity_list, event_label, except_label, except_list, nlp, sentence)
 
-            persist_elasticsearch(eid, es, search_text, title)
-            # 重新置空
-            entity_list = []
+                entity_list = list(set(entity_list))
+
+                persist_neo4j(eid, entity_list, graph, label_dict, title)
+
+                search_text = ""
+                for element in entity_list:
+                    search_text += element[0] + ","
+                search_text = search_text[0:-1]
+
+                persist_elasticsearch(eid, es, search_text, title)
+                # 重新置空
+                entity_list = []
+            else:
+                continue
         else:
-            pass
+            continue
 
 
 def persist_elasticsearch(eid, es, search_text, title):
-    query = {'query': {'match_phrase': {'title': title}}}
-    total = es.count(index="search_text", doc_type="text", body=query)
-    # 根据title查询search_text索引，如果不存在插入
-    if total['count'] == 0:
-        body = {"eid": eid, "title": title, "search_text": search_text}
-        es.index(index="search_text", doc_type="text", body=body)
-        print(search_text)
-    else:
-        pass
+    body = {"eid": eid, "title": title, "search_text": search_text}
+    es.index(index="search_text", doc_type="text", body=body)
+    print(search_text)
 
 
 def persist_neo4j(eid, entity_list, graph, label_dict, title):
-    cypher = "MATCH (a:Event) WHERE a.name =\'" + title + "\' RETURN a"
-    count = len(graph.run(cypher).data())
-    if count == 0:
-        node = Node("Event", name=title, eid=eid, image="EVENT.PNG")
-        graph.create(node)
-        for element in entity_list:
-            node2 = Node(element[1], name=element[0], eid=eid, image=element[1] + ".PNG")
-            graph.create(node2)
-            node_call_node_2 = Relationship(node, label_dict[element[1]], node2)
-            node_call_node_2['edge'] = label_dict[element[1]]
-            graph.create(node_call_node_2)
-    else:
-        pass
+    node = Node("Event", name=title, eid=eid, image="EVENT.PNG")
+    graph.create(node)
+    for element in entity_list:
+        node2 = Node(element[1], name=element[0], eid=eid, image=element[1] + ".PNG")
+        graph.create(node2)
+        node_call_node_2 = Relationship(node, label_dict[element[1]], node2)
+        node_call_node_2['edge'] = label_dict[element[1]]
+        graph.create(node_call_node_2)
 
 
 def deal_sentence(entity_list, event_label, except_label, except_list, nlp, sentence):
-    ner_list = nlp.ner(sentence)
-    for ele in ner_list:
-        if ele[1] in except_label:
-            continue
-        elif ele[0] in except_list:
-            continue
-        elif ele[1] in event_label:
-            # entity_list.append((ele[0], ele[1]))
-            parse_ner_list(entity_list, ner_list, except_label, except_list, event_label)
-        else:
-            continue
+    try:
+        ner_list = nlp.ner(sentence)
+        for ele in ner_list:
+            if ele[1] in except_label:
+                continue
+            elif ele[0] in except_list:
+                continue
+            elif ele[1] in event_label:
+                # entity_list.append((ele[0], ele[1]))
+                parse_ner_list(entity_list, ner_list, except_label, except_list, event_label)
+            else:
+                continue
+    except Exception as e:
+        print(e)
 
 
 if __name__ == '__main__':
     # now_date = get_now_date()
     # ner_persist_to_es_and_neo4j(now_date)
 
-    l = get_pre_date_list("2018-06-04", "2018-08-15")
+    l = get_pre_date_list("2018-06-09", "2018-08-15")
     print(len(l))
     for i in range(len(l)):
         print(l[i])
