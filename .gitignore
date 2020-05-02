@@ -5,4 +5,3 @@ poetry.*
 processing/nohup.out
 comment_emotion/comment_lda.*
 comment_emotion/news_lda.*
-comment_emotion/mnist/MNIST_data/*.gz
